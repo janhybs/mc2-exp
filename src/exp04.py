@@ -225,7 +225,7 @@ data_orig = drop_test(
 
 # cut 5 % outliers
 data_orig = drop_outliers(
-    data_orig, 3.0/100)
+    data_orig, 5.0/100)
 
 
 d, di, ti, a, t, sizes = reveal_data(data_orig)
