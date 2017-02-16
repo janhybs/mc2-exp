@@ -1,0 +1,4 @@
+# pymongo section for authentication
+pymongo:
+  username: "USERNAME"
+  password: "PASSWORD"

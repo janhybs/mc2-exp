@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# idea folder
+/.idea/
+pbs_*.sh
+.config.yaml
