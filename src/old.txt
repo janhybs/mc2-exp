@@ -1,0 +1,186 @@
+\documentclass{IOS-Book-Article}
+
+\usepackage{mathptmx}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{caption}
+
+\usepackage{graphicx}
+
+
+\def\hb{\hbox to 10.7 cm{}}
+
+\begin{document}
+
+\pagestyle{headings}
+\def\thepage{}
+
+\newcommand{\todo}[1]{{\color{red} #1}}
+\newcommand{\argmin}{\arg\!\min}
+
+
+\begin{frontmatter}              % The preamble begins here.
+
+	\title{Performance regression on multiple architectures}
+	
+	\markboth{}{February 2017\hb}
+	%\subtitle{Subtitle}
+	
+	\author{\fnms{Jan} \snm{Hybs}}%
+	,
+	\author{\fnms{Jan} \snm{Brezina}}
+	
+	\address{Institute of New Technologies and Applied Informatics,
+	Faculty of Mechatronics, Technical University of Liberec, Czech Republic}
+	
+	\begin{abstract}
+		This paper 
+	\end{abstract}
+	
+	\begin{keyword}
+		high-performance computing\sep
+		performance analysis\sep
+		performance prediction\sep
+		performance regression\sep
+		high performance computing
+	\end{keyword}
+
+\end{frontmatter}
+
+\markboth{February 2017\hb}{February 2017\hb}
+
+\section{Introduction}
+% The introduction usually contains a background and/or a motivation for the 
+% research including comparison to related research
+
+%  High-performance computing (HPC) clusters
+Recently, a cluster computing is becoming more often used in a software development. We build and test the software we are developing on a remote machine which may or may not be under our control. When developing a numerical software it is important to track its performance using benchmark tests. Combining benchmark testing with a cluster computing may cause problems if a performance of machines used for benchmarking is not the same.
+
+In this paper we use statistical model to estimate \textbf{performance} of the computing machines and a \textbf{requirements} of benchmark tests from repeated benchmark tests execution on multiple machines. Later on we use the performance machine estimates to normalize benchmark data results originating from multiple machines. \todo{performance regression?}
+
+\todo{trpny rod, hlavni myslenka, performance regression, cas}
+
+\section{Model}
+% A description of the method including the relevant equations used to solve the
+% problem.
+
+A duration of the benchmark test $t$ on computing machine $m$ is given by following relation:
+$d_{t,m} = \alpha_m c_t + \beta_m m_t$, where $\alpha_m$ represents duration of a single CPU related operation on machine $m$, similarly $\beta_m$ represents duration of a single memory related operation on machine $m$. A variable $c_t$ designates number of CPU related operations in test $t$ and similarly $m_t$ specifies number of memory related operations in benchmark $t$.
+
+We estimate variables $\alpha, \beta, c, m$ by minimizing function $f(\alpha_m, \beta_m, c_t, b_t) = \alpha_m e^{c_t} + \beta_m e^{m_t}$ for all machines $m$ in set $M$ and all tests $t$ in set $T$. Minimization is then $argmin (f(\alpha_m, \beta_m, c_t, m_t) - \overline{r_{m,b}})^2$, where $\overline{r_{m,t}}$ is a mean duration of the benchmark $b$ on the machine $m$.
+
+
+\section{Experiments}
+% Description of the experiments made.
+
+For the experiments we used Czech National Grid Organization MetaCentrum. We selected 7 computing machines on which experiments were performed. consisting of 47 physical high-performance computing clusters having 13902 CPU in total. For the experiments we created 12 benchmark tests simulating numerical software to a certain degree. We are performing matrix operation stored in compressed sparse row (CSR) format and also in naive 2D array format. \todo{vice}
+
+In the first part of the experiment we collected data on . Each test was repeated several
+times to suppress noise in collected data. In the next step we removed outliers outside of $1.5IQR$ range.
+From this data we computed mean value $\overline{r_{m,t}}$ for the test $t$ on machine $m$.
+From the filtered data we estimated values $\alpha_m, \beta_m, c_t, b_t$. Relative error $E_{m,t} = \frac{|d_{t,m} - \overline{r_{m,b}}|}{\overline{r_{m,b}}}$ of predicted duration $d_{t,m}$ compared to computed duration $\overline{r_{m,b}}$ is 1.18 \% in average (maximum relative error being 4.15 \%).
+
+A second experiment detects performance drop in a numerical software (now we treat benchmarks as parts of a software).
+The numerical software will evolve in time, each evolution will be marked as a version $v_i$.
+We mark parameter estimates $\alpha_m, \beta_m, c_t, b_t$ in version $v_0$ as baseline estimates.
+In the next step we estimate only parameters $c_t^{v_i}$ and $b_t^{v_i}$ (variable $c_t^{v_i}$ is $c_t$
+for version $v_i$, similarly with $b_t^{v_i}$), values $\alpha_m, \beta_m$ will be taken from baseline estimates.
+We define difference in performance for test $t$ in version $v_i$ relative to baseline as 
+$\Delta c_t^{v_0,v_i} = c_t^{v_0} - c_t^{v_i}$. The estimate of $c_t^{v_i}$ and $b_t^{v_i}$ from 
+a sample size $n$ (we have $n$ values for each benchmark). All values $\Delta c_t^{v_0,v_i} > |2std(c_t^{v_0})|$
+now represents performance drop in test $t$. In Table \ref{table:performance-drop} we can see how an increasing
+sample size $n$ affects a detection of a performance drop.
+
+%With sample size $n = 5$ we are able to detect performance drop
+%only if test changed its duration by 20 \% ($std(c_t^{v_0})$ is 6 \%). With bigger sample size $n = 10$
+%we can detect 15 \% performance drop ($std(c_t^{v_0})$ is 2.5 \%). For the sample size $n = 15$
+%we detect performance drop of 10 \% ($std(c_t^{v_0})$ is 1.9 \%). With sample size $n = 20$
+%we can detect performance the threshold 
+
+%\begin{table}[]
+%\centering
+%\begin{tabular}{|c|c|c|}
+%\hline
+%Sample size $n$ & Performance change {[}\%{]}  & std \\ \hline
+%5               & \textgreater\ 20             & 6.6 \\ \hline
+%10              & \textgreater\ 15             & 2.5 \\ \hline
+%15              & \textgreater\ 11             & 1.9 \\ \hline
+%50              & \textgreater\  8             & 1.0 \\ \hline
+%\end{tabular}
+%\caption{Performance drop}
+%\label{performace-drop}
+%\end{table}
+
+\begin{table}[ht]
+\begin{minipage}[b]{0.36\linewidth}
+\centering
+	\begin{tabular}{|c|c|c|}
+	\hline
+		Sample size $n$ & Performance change {[}\%{]}  & std \\ \hline
+		5               & \textgreater\ 20             & 6.6 \\ \hline
+		10              & \textgreater\ 15             & 2.5 \\ \hline
+		15              & \textgreater\ 11             & 2.0 \\ \hline
+		50              & \textgreater\  8             & 1.0 \\ \hline
+   \end{tabular}
+   \caption{Student Database}
+   \label{table:performance-drop}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+\includegraphics[width=55mm]{test-detail}
+\captionof{figure}{Detail of a test $t$ which was slowed down. The gray stripe represents $\Delta c_t^{v_0,v_i} > |2std(c_t^{v_0})|$. Sample size $n = 15$}
+\label{fig:image}
+\end{minipage}
+\end{table}
+
+
+
+
+
+% We will treat benchmark tests as parts of a numerical software. We estimate baseline parameters $\alpha_m, \beta_m, c_t, b_t$ of specific version of our software $v_0$. Next, we will slightly change our software creating new version $v_i$, $i > 0$. We increase duration of the test $k$, run benchmarks again on random computing machines and estimate parameters $c_t^{v_i}$ and $b_t^{v_i}$ while values $\alpha_m$ and $\beta_m$ will not change. We repeat previous step and create total of $n$ software versions. Variable $c_t^{v_i}$ now represents number of CPU related operations in test $t$ for version $v_i$. Difference $\Delta c_t^{v_0,v_i} = c_t^{v_0} - c_t^{v_i}$ represents performance change between version $v_0$ and $v_i$. Results show that differences $\Delta c_t^{v_0,v_i}, \{i \mid 1 < i < n,\ t \neq k\}$ are within range $(\overline{c_t^{v_0}} - 2SD(c_t^{v_0}),\ \overline{c_t^{v_0}} + 2SD(c_t^{v_0}))$. For test $k$ which was altered in every version we are able to detect performance regression bigger than $2SD(c_k^{v_0})$ when changes to test $k$ increased duration of the test by 11 \%. 
+
+
+
+% \section{Results}
+% Presentation of the result obtained. If possible, use descriptive figures or tables
+% rather than explain in text. Do not discuss or interpret the results at this stage.
+
+
+
+% \section{Discussion}
+% Discuss the results. What conclusions can you draw? Put your results in
+% perspective by comparing to other studies or generally accepted knowledge in the field.
+% Criticise your own method and results, for example, with respect to the simplifications
+% made.
+
+\section{Conclusion}
+% Discuss the results. What conclusions can you draw? Put your results in
+% perspective by comparing to other studies or generally accepted knowledge in the field.
+% Criticise your own method and results, for example, with respect to the simplifications
+% made.
+
+Computing machines on MetaCentrum are all shared, meaning all benchmark tests were influenced by other users on the same computing machine. Originally our benchmark set contained other benchmark tests stressing different cache sizes and a registry speed but due to a high variation in collected data we were
+forced to leave this data out. Benchmark tests duration have standard deviation 2-3 \% even after filtration (popular machines have $std$ of 5 \% while unpopular ones have $std$ of 0.5 \%).
+
+
+\begin{thebibliography}{99}
+
+	\bibitem{r1}
+	\textit{Scientific Style and Format: The CBE manual for authors,
+	editors and publishers}. Style Manual Committee, Council of Biology Editors.
+	Sixth ed. Cambridge University Press, 1994.
+	
+	\bibitem{r2}
+	L.U. Ante, Cem surgere: Surgite postquam sederitis, qui manducatis panem doloris,
+	\textit{Omnes} \textbf{13} (1916), 114--119.
+	
+	\bibitem{r3}
+	T.X. Confortavit, \textit{Seras}, Portarum, New York, 1995.
+	
+	\bibitem{r4}
+	P.A. Deus, Ater hoc et filius et mater praestet nobis,
+	\textit{Paterhoc} \textbf{66} (1993), 856--890.
+
+\end{thebibliography}
+\end{document}
+

@@ -280,6 +280,13 @@ for i in range(1):
     print(pd.DataFrame([ea.flatten(), eb.flatten()], index=['alpha', 'beta'], columns=a.flatten()))
     print(pd.DataFrame([ec.flatten(), em.flatten()], index=['cpus', 'mems'], columns=t.flatten()))
 
+    result = pd.DataFrame([ea.flatten(), eb.flatten()], index=['alpha', 'beta'], columns=a.flatten())
+    result = result.sort_index(axis=1)
+
+    print(result)
+    print(result.columns.values.tolist())
+    print(result.values.tolist())
+
     ed = calculate_eq(ea, eb, ec, em)
     edi = calculate_eq(ea[:, ti], eb[:, ti], ec, em)
 
@@ -287,7 +294,7 @@ for i in range(1):
     D = abs(rel_error) + 1e-16
     print(pd.DataFrame([D.flatten().min(), D.flatten().max(), D.flatten().mean()], index=['min', 'max', 'mean']))
 
-    plt.colorbar(plt.matshow(D, norm=LogNorm(vmin=1e-4, vmax=1e-1)))
+    plt.colorbar(plt.matshow(D, norm=LogNorm(vmin=1e-3, vmax=1e-1)))
     plt.xticks(np.arange(t.size), t.flatten(), rotation='vertical')
     plt.yticks(np.arange(a.size), a.flatten())
     # plt.colorbar(plt.matshow(D))

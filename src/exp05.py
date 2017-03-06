@@ -28,8 +28,8 @@ def apply_to_panda(method, data, *args, **kwargs):
     if isinstance(data, pd.DataFrame):
         cols = data.columns.values
         rows = data.index.values
-        norm = method(data, *args, **kwargs)
-        return pd.DataFrame(norm, columns=cols, index=rows)
+        normed = method(data, *args, **kwargs)
+        return pd.DataFrame(normed, columns=cols, index=rows)
     return method(data, *args, **kwargs)
 
 
@@ -118,11 +118,14 @@ def drop_machine(data, eq=False, **kwargs):
     return data
 
 
-def drop_test(data, **kwargs):
+def drop_test(data, *args, **kwargs):
     """
     :type data: pandas.core.frame.DataFrame
     :rtype: pandas.core.frame.DataFrame
     """
+    for arg in args:
+        data = data.drop(arg, axis=1)
+
     for key, value in kwargs.items():
         data = data.drop(key, axis=value)
     return data
@@ -222,6 +225,14 @@ for test in t.flatten():
         data_orig['machine'] = data_raw[data_raw['testname'] == test]['machine'].values
     data_orig[test] = data_raw[data_raw['testname'] == test]['duration'].values
 
+    v = data_raw[data_raw['testname'] == test]['duration'].values
+
+means = np.mean(data_orig)
+means = means.sort_values()
+data_orig = drop_test(
+    data_orig,
+    *means[::-1][10:].index.values
+)
 
 machines = data_orig['machine']
 del data_orig['machine']
@@ -235,6 +246,11 @@ data_orig = pd.DataFrame.from_csv('prof.orig.csv')
 # cut 5 % outliers
 data_orig = drop_outliers(
     data_orig, 0.05, 0.50)
+
+# drop problematic architecture
+data_orig = drop_machine(
+    data_orig,
+    machine='ajax')
 
 # inspect_machine(data_orig, 'mudrc')
 d, di, ti, a, t, sizes = reveal_data(data_orig)
@@ -295,6 +311,13 @@ for i in range(1):
     ea, eb, ec, em = unpack(popt, *sizes)
     print(pd.DataFrame([ea.flatten(), eb.flatten()], index=['alpha', 'beta'], columns=a.flatten()))
     print(pd.DataFrame([ec.flatten(), em.flatten()], index=['cpus', 'mem1'], columns=t.flatten()))
+
+    result = pd.DataFrame([ea.flatten(), eb.flatten()], index=['alpha', 'beta'], columns=a.flatten())
+    result = result.sort_index(axis=1)
+
+    print(result)
+    print(result.columns.values.tolist())
+    print(result.values.tolist())
 
     ed = calculate_eq2(ea, eb, ec, em)
     edi = calculate_eq2(ea[:, ti], eb[:, ti], ec, em)
